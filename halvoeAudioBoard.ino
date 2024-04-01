@@ -1,27 +1,38 @@
-#include <SdFat.h>
+#include <AudioTools.h>
+#include <AudioLibs/AudioSourceSDFAT.h>
+#include <AudioCodecs/CodecWAV.h>
 
-#define SD_CS_PIN 5
-#define SPI_CLOCK SD_SCK_MHZ(20)
+const char *startFilePath="/";
+const char* ext="wav";
+AudioSourceSDFAT source(startFilePath, ext);
+I2SStream i2s;
+WAVDecoder decoder;
+AudioPlayer player(source, i2s, decoder);
 
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
-
-SdFs sd;
+/*void printMetaData(MetaDataType type, const char* str, int len)
+{
+  Serial.print("==> ");
+  Serial.print(toStr(type));
+  Serial.print(": ");
+  Serial.println(str);
+}*/
 
 void setup()
 {
   Serial.begin(9600);
-  delay(1000);
+  AudioLogger::instance().begin(Serial, AudioLogger::Info);
 
-  if (not sd.begin(SD_CONFIG))
-  {
-    sd.initErrorHalt(&Serial);
-  }
-  
-  Serial.println(sd.exists("ddd.wav") ? "found wav" : "did not found wav");
+  // setup output
+  auto cfg = i2s.defaultConfig(TX_MODE);
+  i2s.begin(cfg);
+
+  // setup player
+  //source.setFileFilter("*Bob Dylan*");
+  //player.setMetadataCallback(printMetaData);
+  player.begin();
 }
 
 void loop()
 {
-  delay(1000);
-  Serial.print(".");
+  player.copy();
 }
