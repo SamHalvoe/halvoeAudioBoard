@@ -14,7 +14,7 @@
 #define BCLKPIN             27 // Bit Clock
 #define WSPIN               26 // Word select
 #define DOPIN               25 // This is connected to DI on WM8960 (MISO)
-//#define DIPIN               35 // This is connected to DO on WM8960 (MOSI)
+#define DIPIN               -1 // This is connected to DO on WM8960 (MOSI)
 
 AudioInfo                     audio_info(44100, 2, 16);                // sampling rate, # channels, bit depth
 DriverPins                    my_pins;                                 // board pins
@@ -43,7 +43,7 @@ void setup()
 
   // setup i2c and i2s pins
   my_pins.addI2C(PinFunction::CODEC, SCLPIN, SDAPIN, WM8960ADDR, I2CSPEED, Wire);
-  my_pins.addI2S(PinFunction::CODEC, MCLKPIN, BCLKPIN, WSPIN, DOPIN);//, DIPIN);
+  my_pins.addI2S(PinFunction::CODEC, MCLKPIN, BCLKPIN, WSPIN, DOPIN, DIPIN);
   my_pins.begin();
 
   audio_board.begin();
