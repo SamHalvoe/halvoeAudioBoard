@@ -1,6 +1,6 @@
+#include <SparkFun_WM8960_Arduino_Library.h> 
 #include <AudioTools.h>
 #include <AudioLibs/AudioSourceSDFAT.h>
-#include <AudioLibs/I2SCodecStream.h>
 #include <AudioCodecs/CodecWAV.h>
 
 // I2C
@@ -11,59 +11,124 @@
 
 // I2S, your configuration for the WM8960 board
 #define MCLK_PIN             -1 // Master Clock
-#define BCLK_PIN             27 // Bit Clock
-#define WS_PIN               26 // Word select
-#define DO_PIN               25 // This is connected to DI on WM8960 (MISO)
+#define BCLK_PIN             26 // Bit Clock
+#define WS_PIN               25 // Word select
+#define DO_PIN               4 // This is connected to DI on WM8960 (MISO)
 #define DI_PIN               -1 // This is connected to DO on WM8960 (MOSI)
 
-AudioInfo                     audio_info(44100, 2, 16);                // sampling rate, # channels, bit depth
-DriverPins                    my_pins;                                 // board pins
-AudioBoard                    audio_board(AudioDriverWM8960, my_pins); // audio board
-I2SCodecStream                i2s_out_stream(audio_board);             // i2s coded
+WM8960 codec;
 
-/*const char *startFilePath="/";
+AudioInfo audio_info(44100, 2, 16);                // sampling rate, # channels, bit depth
+I2SStream i2s_out_stream;
+
+const char* startFilePath="/";
 const char* ext="wav";
 AudioSourceSDFAT source(startFilePath, ext);
 WAVDecoder decoder;
-AudioPlayer player(source, i2s_out_stream, decoder);*/
+AudioPlayer player(source, i2s_out_stream, decoder);
 
-SineWaveGenerator<int16_t> sineWave(32000);
+/*SineWaveGenerator<int16_t> sineWave(32000);
 GeneratedSoundStream<int16_t> sound(sineWave);
-StreamCopy copier(i2s_out_stream, sound);
+StreamCopy copier(i2s_out_stream, sound);*/
+
+void codec_setup()
+{
+  // General setup needed
+  codec.enableVREF();
+  codec.enableVMID();
+
+  // Connect from DAC outputs to output mixer
+  codec.enableLD2LO();
+  codec.enableRD2RO();
+
+  // Set gainstage between booster mixer and output mixer
+  // For this loopback example, we are going to keep these as low as they go
+  codec.setLB2LOVOL(WM8960_OUTPUT_MIXER_GAIN_NEG_21DB); 
+  codec.setRB2ROVOL(WM8960_OUTPUT_MIXER_GAIN_NEG_21DB);
+
+  // Enable output mixers
+  codec.enableLOMIX();
+  codec.enableROMIX();
+
+  // CLOCK STUFF, These settings will get you 44.1KHz sample rate, and class-d 
+  // freq at 705.6kHz
+  codec.enablePLL(); // Needed for class-d amp clock
+  codec.setPLLPRESCALE(WM8960_PLLPRESCALE_DIV_2);
+  codec.setSMD(WM8960_PLL_MODE_FRACTIONAL);
+  codec.setCLKSEL(WM8960_CLKSEL_PLL);
+  codec.setSYSCLKDIV(WM8960_SYSCLK_DIV_BY_2);
+  codec.setBCLKDIV(4);
+  codec.setDCLKDIV(WM8960_DCLKDIV_16);
+  codec.setPLLN(7);
+  codec.setPLLK(0x86, 0xC2, 0x26); // PLLK=86C226h
+  //codec.setADCDIV(0); // Default is 000 (what we need for 44.1KHz)
+  //codec.setDACDIV(0); // Default is 000 (what we need for 44.1KHz)
+  codec.setWL(WM8960_WL_16BIT);
+
+  codec.enablePeripheralMode();
+  //codec.enableMasterMode();
+  //codec.setALRCGPIO(); // Note, should not be changed while ADC is enabled.
+
+  // Enable DACs
+  codec.enableDacLeft();
+  codec.enableDacRight();
+
+  //codec.enableLoopBack(); // Loopback sends ADC data directly into DAC
+  codec.disableLoopBack();
+
+  // Default is "soft mute" on, so we must disable mute to make channels active
+  codec.disableDacMute(); 
+
+  codec.enableHeadphones();
+  codec.enableOUT3MIX(); // Provides VMID as buffer for headphone ground
+
+  Serial.println("Volume set to -15dB");
+  codec.setHeadphoneVolumeDB(-15.00);
+
+  Serial.println("Codec Setup complete.");
+}
 
 void setup()
 {
   Serial.begin(9600);
-  AudioLogger::instance().begin(Serial, AudioLogger::Info);
+  AudioLogger::instance().begin(Serial, AudioLogger::Warning);
   delay(2000);
 
   Serial.println("[Serial Ready]");
   Serial.println("---- SETUP BEGIN ----");
 
-  // setup i2c and i2s pins
-  my_pins.addI2C(PinFunction::CODEC, SCL_PIN, SDA_PIN, WM8960_ADDR, I2C_SPEED, Wire);
-  my_pins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
-  my_pins.begin();
+  Wire.begin();
 
-  audio_board.begin();
+  if (codec.begin())
+  {
+    Serial.println("The codec did respond.");
+
+    codec_setup();
+  }
+  else
+  {
+    Serial.println("The codec did not respond!");
+  }
   
   // setup i2s
   auto i2s_config = i2s_out_stream.defaultConfig();
   i2s_config.copyFrom(audio_info);
+  i2s_config.pin_bck = BCLK_PIN;
+  i2s_config.pin_ws = WS_PIN;
+  i2s_config.pin_data = DO_PIN;
+  i2s_config.pin_data_rx = DI_PIN;
+
   i2s_out_stream.begin(i2s_config);
 
-  // set volume
-  i2s_out_stream.setVolume(0.625);
-
   // setup player
-  //player.begin();
-  sineWave.begin(audio_info, N_B4);
+  player.begin();
+  //sineWave.begin(audio_info, N_F5);
 
   Serial.println("---- SETUP END ----");
 }
 
 void loop()
 {
-  //player.copy();
-  copier.copy();
+  player.copy();
+  //copier.copy();
 }
