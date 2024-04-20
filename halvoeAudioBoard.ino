@@ -11,9 +11,9 @@
 
 // I2S, your configuration for the WM8960 board
 #define MCLK_PIN             -1 // Master Clock
-#define BCLK_PIN             26 // Bit Clock
-#define WS_PIN               25 // Word select
-#define DO_PIN               4 // This is connected to DI on WM8960 (MISO)
+#define BCLK_PIN             27 // Bit Clock
+#define WS_PIN               26 // Word select
+#define DO_PIN               25 // This is connected to DI on WM8960 (MISO)
 #define DI_PIN               -1 // This is connected to DO on WM8960 (MOSI)
 
 WM8960 codec;
@@ -82,8 +82,8 @@ void codec_setup()
   codec.enableHeadphones();
   codec.enableOUT3MIX(); // Provides VMID as buffer for headphone ground
 
-  Serial.println("Volume set to -15dB");
-  codec.setHeadphoneVolumeDB(-15.00);
+  Serial.println("Volume set to -20.00 dB");
+  codec.setHeadphoneVolumeDB(-20.00);
 
   Serial.println("Codec Setup complete.");
 }
