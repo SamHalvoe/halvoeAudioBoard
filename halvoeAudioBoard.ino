@@ -27,10 +27,6 @@ AudioSourceSDFAT source(startFilePath, ext);
 WAVDecoder decoder;
 AudioPlayer player(source, i2s_out_stream, decoder);
 
-/*SineWaveGenerator<int16_t> sineWave(32000);
-GeneratedSoundStream<int16_t> sound(sineWave);
-StreamCopy copier(i2s_out_stream, sound);*/
-
 void codec_setup()
 {
   // General setup needed
@@ -122,13 +118,18 @@ void setup()
 
   // setup player
   player.begin();
-  //sineWave.begin(audio_info, N_F5);
 
   Serial.println("---- SETUP END ----");
 }
 
+bool i
+
 void loop()
 {
   player.copy();
-  //copier.copy();
+  
+  if (not player.isActive())
+  {
+    Serial.println
+  }
 }
