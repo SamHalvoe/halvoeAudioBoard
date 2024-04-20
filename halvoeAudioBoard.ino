@@ -21,20 +21,20 @@ DriverPins                    my_pins;                                 // board 
 AudioBoard                    audio_board(AudioDriverWM8960, my_pins); // audio board
 I2SCodecStream                i2s_out_stream(audio_board);             // i2s coded
 
-/*const char *startFilePath="/";
+const char* startFilePath="/";
 const char* ext="wav";
 AudioSourceSDFAT source(startFilePath, ext);
 WAVDecoder decoder;
-AudioPlayer player(source, i2s_out_stream, decoder);*/
+AudioPlayer player(source, i2s_out_stream, decoder);
 
-SineWaveGenerator<int16_t> sineWave(32000);
+/*SineWaveGenerator<int16_t> sineWave(32000);
 GeneratedSoundStream<int16_t> sound(sineWave);
-StreamCopy copier(i2s_out_stream, sound);
+StreamCopy copier(i2s_out_stream, sound);*/
 
 void setup()
 {
   Serial.begin(9600);
-  AudioLogger::instance().begin(Serial, AudioLogger::Info);
+  AudioLogger::instance().begin(Serial, AudioLogger::Warning);
   delay(2000);
 
   Serial.println("[Serial Ready]");
@@ -45,7 +45,7 @@ void setup()
   my_pins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
   my_pins.begin();
 
-  audio_board.begin();
+  //audio_board.begin();
   
   // setup i2s
   auto i2s_config = i2s_out_stream.defaultConfig();
@@ -56,14 +56,14 @@ void setup()
   i2s_out_stream.setVolume(0.625);
 
   // setup player
-  //player.begin();
-  sineWave.begin(audio_info, N_B4);
+  player.begin();
+  //sineWave.begin(audio_info, N_B4);
 
   Serial.println("---- SETUP END ----");
 }
 
 void loop()
 {
-  //player.copy();
-  copier.copy();
+  player.copy();
+  //copier.copy();
 }
