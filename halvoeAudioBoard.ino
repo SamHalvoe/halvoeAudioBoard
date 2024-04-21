@@ -20,16 +20,22 @@
 #define DO_PIN               25 // This is connected to DI on WM8960 (MISO)
 #define DI_PIN               -1 // This is connected to DO on WM8960 (MOSI)
 
-AudioInfo audio_info(44100, 2, 16);                    // sampling rate, # channels, bit depth
-DriverPins audio_pins;                                 // board pins
-AudioBoard audio_board(AudioDriverWM8960, audio_pins); // audio board
-I2SCodecStream i2s_out_stream(audio_board);            // i2s coded
+Pipeline audioPipeline;
+AudioInfo audioInfo(44100, 2, 16); // sampling rate, # channels, bit depth
+DriverPins audioPins;
+AudioBoard audioBoard(AudioDriverWM8960, audioPins);
+I2SCodecStream i2sOutStream(audioBoard);
+
+FadeStream fadeStream;
+VolumeStream volumeStream;
+
 const char* soundFilename = "ddd4416.wav";
 SdFat sdCard;
 File soundFile;
-WAVDecoder decoder;
-EncodedAudioStream encoded_out_stream(&i2s_out_stream, &decoder);
-StreamCopy audio_copier(encoded_out_stream, soundFile);
+
+WAVDecoder wavDecoder;
+EncodedAudioStream encodedAudioStream(&wavDecoder);
+StreamCopy audioCopier(audioPipeline, soundFile, 4096);
 
 bool isPlaybackActive = false;
 
@@ -55,25 +61,37 @@ void setup()
   }
 
   // setup i2c and i2s pins
-  audio_pins.addI2C(PinFunction::CODEC, SCL_PIN, SDA_PIN, WM8960_ADDR, I2C_SPEED, Wire);
-  audio_pins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
-  audio_pins.begin();
+  audioPins.addI2C(PinFunction::CODEC, SCL_PIN, SDA_PIN, WM8960_ADDR, I2C_SPEED, Wire);
+  audioPins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
+  audioPins.begin();
   
   // setup i2s
-  auto i2s_config = i2s_out_stream.defaultConfig();
-  i2s_config.copyFrom(audio_info);
-  i2s_config.buffer_size = 2048;
-  i2s_out_stream.begin(i2s_config);
+  auto i2sConfig = i2sOutStream.defaultConfig();
+  i2sConfig.copyFrom(audioInfo);
+  i2sConfig.buffer_size = 2048;
+  i2sOutStream.begin(i2sConfig);
+  
+  // set(up) volume (control)
+  i2sOutStream.setVolume(1.0);
+  volumeStream.setVolume(1.0);
+  volumeStream.begin(audioInfo);
 
-  // set volume
-  i2s_out_stream.setVolume(0.75);
-
+  // setup fade stream
+  fadeStream.setFadeInActive(true);
+  fadeStream.begin(audioInfo);
+  
   // setup encoded stream
-  encoded_out_stream.begin(audio_info);
+  encodedAudioStream.begin(audioInfo);
+
+  // setup audio pipeline
+  audioPipeline.add(encodedAudioStream);
+  audioPipeline.add(volumeStream);
+  audioPipeline.add(fadeStream);
+  audioPipeline.setOutput(i2sOutStream);
 
   // setup audio copier
-  audio_copier.resize(4096);
-  audio_copier.begin();
+  audioCopier.begin();
+
   isPlaybackActive = true;
 
   Serial.println("---- SETUP END ----");
@@ -83,13 +101,12 @@ void loop()
 {
   if (isPlaybackActive)
   {
-    size_t copiedBytesCount = audio_copier.copy();
+    size_t copiedBytesCount = audioCopier.copy();
 
     if (copiedBytesCount == 0) // 0 bytes copied mean end of source
     {
-      audio_copier.end();
-      soundFile.close();
-      i2s_out_stream.setMute(true);
+      audioCopier.end();
+      i2sOutStream.setMute(true);
       isPlaybackActive = false;
       Serial.println("playback finished");
     }
