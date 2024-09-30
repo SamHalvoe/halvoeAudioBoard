@@ -38,8 +38,8 @@ StreamCopy audioCopier(audioPipeline, soundFile, 4096);
 bool isPlaybackActive = false;
 
 WM8960 codecBoard;
-const float dacVolumeDBMin = -40.0;
-const float dacVolumeDBMax = 20.0;
+const float dacVolumeDBMin = -30.0;
+const float dacVolumeDBMax = 30.0;
 float dacVolumeDB = dacVolumeDBMin;
 
 bool setupCodecBoard()
@@ -62,11 +62,10 @@ bool setupCodecBoard()
   // Connect from DAC outputs to output mixer
   codecBoard.enableLD2LO();
   codecBoard.enableRD2RO();
-
+  
   // Set gainstage between booster mixer and output mixer
-  // For this loopback example, we are going to keep these as low as they go
-  codecBoard.setLB2LOVOL(WM8960_OUTPUT_MIXER_GAIN_NEG_21DB); 
-  codecBoard.setRB2ROVOL(WM8960_OUTPUT_MIXER_GAIN_NEG_21DB);
+  codecBoard.setLB2LOVOL(WM8960_OUTPUT_MIXER_GAIN_0DB);
+  codecBoard.setRB2ROVOL(WM8960_OUTPUT_MIXER_GAIN_0DB);
 
   // Enable output mixers
   codecBoard.enableLOMIX();
@@ -99,9 +98,12 @@ bool setupCodecBoard()
 
   codecBoard.enableHeadphones();
   codecBoard.enableOUT3MIX(); // Provides VMID as buffer for headphone ground
+  codecBoard.setHeadphoneVolumeDB(-73.0);
 
-  codecBoard.setHeadphoneVolumeDB(0.0);
-
+  codecBoard.enableSpeakers();
+  codecBoard.setSpeakerVolumeDB(6.0);
+  codecBoard.setSpeakerDcGain(1);
+  
   codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
   codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
 
@@ -143,16 +145,11 @@ void setup()
   i2sConfig.buffer_size = 2048;
   i2sOutStream.begin(i2sConfig);
   
-  // set(up) volume (control)
-  volumeStream.setVolume(1.0);
-  volumeStream.begin(audioInfo);
-  
   // setup encoded stream
   encodedAudioStream.begin(audioInfo);
 
   // setup audio pipeline
   audioPipeline.add(encodedAudioStream);
-  audioPipeline.add(volumeStream);
   audioPipeline.setOutput(i2sOutStream);
 
   // setup audio copier
@@ -180,21 +177,20 @@ void loop()
       {
         codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
         codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
+        Serial.print("dacVolumeDB: ");
+        Serial.println(dacVolumeDB);
         Serial.println("volume updated");
         timeSinceVolumeUpdate = 0;
       }
-
-      Serial.print("dacVolumeDB: ");
-      Serial.println(dacVolumeDB);
     }
 
     if (copiedBytesCount == 0) // 0 bytes copied mean end of source
     {
       dacVolumeDB = dacVolumeDBMin;
+      codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
+      codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
       soundFile.seek(44); // (re)start playing of soundFile from position 44 to skip the wav header
-      //audioCopier.end();
-      //volumeStream.setVolume(0.0);
-      //isPlaybackActive = false;
+
       Serial.println("playback finished");
     }
   }
