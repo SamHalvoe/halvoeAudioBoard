@@ -1,9 +1,14 @@
-#include <elapsedMillis.h>
+#include <AudioBoard.h>
+#include <Driver.h>
+#include <DriverCommon.h>
+#include <DriverPins.h>
+
+#include <AudioTools.h>
+#include <AudioLibs/I2SCodecStream.h>
+#include <AudioCodecs/CodecWAV.h>
 
 #include <SdFat.h>
-#include <SparkFun_WM8960_Arduino_Library.h> 
-#include <AudioTools.h>
-#include <AudioCodecs/CodecWAV.h>
+#include <elapsedMillis.h>
 
 #define SD_CS_PIN 5
 #define SPI_CLOCK SD_SCK_MHZ(20)
@@ -24,8 +29,10 @@
 
 AudioInfo audioInfo(44100, 2, 16); // sampling rate, # channels, bit depth
 Pipeline audioPipeline;
+DriverPins audioPins;
+AudioBoard audioBoard(AudioDriverWM8960, audioPins);
+I2SCodecStream i2sOutStream(audioBoard);
 VolumeStream volumeStream;
-I2SStream i2sOutStream;
 
 const char* soundFilename = "ddd4416.wav";
 SdFat sdCard;
@@ -36,79 +43,6 @@ EncodedAudioStream encodedAudioStream(&wavDecoder);
 StreamCopy audioCopier(audioPipeline, soundFile, 4096);
 
 bool isPlaybackActive = false;
-
-WM8960 codecBoard;
-const float dacVolumeDBMin = -30.0;
-const float dacVolumeDBMax = 30.0;
-float dacVolumeDB = dacVolumeDBMin;
-
-bool setupCodecBoard()
-{
-  if (codecBoard.begin())
-  {
-    Serial.println("The codec did respond.");
-  }
-  else
-  {
-    Serial.println("The codec did not respond!");
-
-    return false;
-  }
-
-  // General setup needed
-  codecBoard.enableVREF();
-  codecBoard.enableVMID();
-
-  // Connect from DAC outputs to output mixer
-  codecBoard.enableLD2LO();
-  codecBoard.enableRD2RO();
-  
-  // Set gainstage between booster mixer and output mixer
-  codecBoard.setLB2LOVOL(WM8960_OUTPUT_MIXER_GAIN_0DB);
-  codecBoard.setRB2ROVOL(WM8960_OUTPUT_MIXER_GAIN_0DB);
-
-  // Enable output mixers
-  codecBoard.enableLOMIX();
-  codecBoard.enableROMIX();
-
-  // CLOCK STUFF, These settings will get you 44.1KHz sample rate, and class-d freq at 705.6kHz
-  codecBoard.enablePLL(); // Needed for class-d amp clock
-  codecBoard.setPLLPRESCALE(WM8960_PLLPRESCALE_DIV_2);
-  codecBoard.setSMD(WM8960_PLL_MODE_FRACTIONAL);
-  codecBoard.setCLKSEL(WM8960_CLKSEL_PLL);
-  codecBoard.setSYSCLKDIV(WM8960_SYSCLK_DIV_BY_2);
-  codecBoard.setBCLKDIV(4);
-  codecBoard.setDCLKDIV(WM8960_DCLKDIV_16);
-  codecBoard.setPLLN(7);
-  codecBoard.setPLLK(0x86, 0xC2, 0x26); // PLLK=86C226h
-  //codecBoard.setADCDIV(0); // Default is 000 (what we need for 44.1KHz)
-  //codecBoard.setDACDIV(0); // Default is 000 (what we need for 44.1KHz)
-  codecBoard.setWL(WM8960_WL_16BIT);
-
-  codecBoard.enablePeripheralMode();
-
-  // Enable DACs
-  codecBoard.enableDacLeft();
-  codecBoard.enableDacRight();
-
-  codecBoard.disableLoopBack();
-
-  // Default is "soft mute" on, so we must disable mute to make channels active
-  codecBoard.disableDacMute();
-
-  codecBoard.enableHeadphones();
-  codecBoard.enableOUT3MIX(); // Provides VMID as buffer for headphone ground
-  codecBoard.setHeadphoneVolumeDB(-73.0);
-
-  codecBoard.enableSpeakers();
-  codecBoard.setSpeakerVolumeDB(6.0);
-  codecBoard.setSpeakerDcGain(1);
-  
-  codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
-  codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
-
-  return true;
-}
 
 void setup()
 {
@@ -131,25 +65,34 @@ void setup()
     Serial.println("\"");
   }
 
+  // setup i2c and i2s pins
+  audioPins.addI2C(PinFunction::CODEC, SCL_PIN, SDA_PIN, WM8960_ADDR, I2C_SPEED, Wire);
+  audioPins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
+  audioPins.begin();
   Wire.begin();
-  setupCodecBoard();
-  
-  // setup i2s
-  auto i2sConfig = i2sOutStream.defaultConfig();
-  i2sConfig.copyFrom(audioInfo);
-  i2sConfig.pin_mck = MCLK_PIN;
-  i2sConfig.pin_bck = BCLK_PIN;
-  i2sConfig.pin_ws = WS_PIN;
-  i2sConfig.pin_data = DO_PIN;
-  i2sConfig.pin_data_rx = DI_PIN;
-  i2sConfig.buffer_size = 2048;
-  i2sOutStream.begin(i2sConfig);
-  
+
+  audioBoard.setVolume(100);
+
   // setup encoded stream
   encodedAudioStream.begin(audioInfo);
 
+  // setup volume stream
+  auto volumeConfig = volumeStream.defaultConfig();
+  volumeConfig.copyFrom(audioInfo);
+  volumeConfig.allow_boost = true;
+  volumeStream.begin(volumeConfig);
+  volumeStream.setVolume(0.0);
+
+  // setup i2s
+  auto i2sConfig = i2sOutStream.defaultConfig();
+  i2sConfig.copyFrom(audioInfo);
+  i2sConfig.buffer_size = 2048;
+  i2sOutStream.begin(i2sConfig);
+  i2sOutStream.setVolume(1.0);
+
   // setup audio pipeline
   audioPipeline.add(encodedAudioStream);
+  audioPipeline.add(volumeStream);
   audioPipeline.setOutput(i2sOutStream);
 
   // setup audio copier
@@ -160,35 +103,25 @@ void setup()
   Serial.println("---- SETUP END ----");
 }
 
-const uint8_t volumeUpdateInterval = 20;
-elapsedMillis timeSinceVolumeUpdate = volumeUpdateInterval;
+float volumeStep = 0.05;
+float volume = volumeStep;
 
 void loop()
 {
   if (isPlaybackActive)
   {
     size_t copiedBytesCount = audioCopier.copy();
-
-    if (dacVolumeDB < dacVolumeDBMax)
+    
+    if (volume < 1.0)
     {
-      dacVolumeDB = dacVolumeDB + 1.0;
-
-      if (timeSinceVolumeUpdate > volumeUpdateInterval)
-      {
-        codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
-        codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
-        Serial.print("dacVolumeDB: ");
-        Serial.println(dacVolumeDB);
-        Serial.println("volume updated");
-        timeSinceVolumeUpdate = 0;
-      }
+      volumeStream.setVolume(volume);
+      volume = volume + volumeStep;
     }
 
     if (copiedBytesCount == 0) // 0 bytes copied mean end of source
     {
-      dacVolumeDB = dacVolumeDBMin;
-      codecBoard.setDacLeftDigitalVolumeDB(dacVolumeDB);
-      codecBoard.setDacRightDigitalVolumeDB(dacVolumeDB);
+      volumeStream.setVolume(0.0);
+      volume = 0.0;
       soundFile.seek(44); // (re)start playing of soundFile from position 44 to skip the wav header
 
       Serial.println("playback finished");
