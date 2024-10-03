@@ -10,6 +10,8 @@
 #include <SdFat.h>
 #include <elapsedMillis.h>
 
+#include <BasicSerializer.hpp>
+
 #define SD_CS_PIN 5
 #define SPI_CLOCK SD_SCK_MHZ(20)
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
@@ -44,6 +46,8 @@ StreamCopy audioCopier(audioPipeline, soundFile, 4096);
 
 bool isPlaybackActive = false;
 
+std::array<uint8_t, 128> deserializerBuffer;
+
 void setup()
 {
   Serial.begin(115200);
@@ -52,6 +56,9 @@ void setup()
 
   Serial.println("[Serial Ready]");
   Serial.println("---- SETUP BEGIN ----");
+
+  Serial1.setPins(33, 32);
+  Serial1.begin(19200);
 
   if (not sdCard.begin(SD_CONFIG))
   {
@@ -108,10 +115,46 @@ float volume = volumeStep;
 
 void loop()
 {
+  if (Serial1.available() >= 4)
+  {
+    Serial.println("available() >= 4");
+    halvoe::Deserializer<128> deserializer(deserializerBuffer);
+
+    if (Serial1.readBytes(deserializerBuffer.data(), sizeof(uint16_t)) == sizeof(uint16_t))
+    {
+      Serial.println("readBytes() == sizeof(uint16_t)");
+      uint16_t length = deserializer.read<uint16_t>();
+      Serial.println(length);
+      Serial1.readBytes(deserializerBuffer.data() + sizeof(uint16_t), length);
+      uint16_t command = deserializer.read<uint16_t>();
+      Serial.println(command);
+      
+      if (command == 42)
+      {
+        Serial.println("42 begin");
+        volumeStream.setVolume(0.0);
+        volume = 0.0;
+        isPlaybackActive = not isPlaybackActive;
+
+        if (isPlaybackActive)
+        {
+          soundFile.seek(44); // (re)start playing of soundFile from position 44 to skip the wav header
+        }
+
+        Serial.println("42 end");
+      }
+    }
+  }
+
+  if (not isPlaybackActive)
+  {
+    encodedAudioStream.writeSilence(32);
+  }
+  
+  size_t copiedBytesCount = audioCopier.copy();
+
   if (isPlaybackActive)
   {
-    size_t copiedBytesCount = audioCopier.copy();
-    
     if (volume < 1.0)
     {
       volumeStream.setVolume(volume);
@@ -123,8 +166,6 @@ void loop()
       volumeStream.setVolume(0.0);
       volume = 0.0;
       soundFile.seek(44); // (re)start playing of soundFile from position 44 to skip the wav header
-
-      Serial.println("playback finished");
     }
   }
 }
