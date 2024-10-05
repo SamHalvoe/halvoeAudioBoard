@@ -9,6 +9,7 @@ const char* soundFilename = "ddd4416.wav";
 File soundFile;
 bool isPlaybackActive = false;
 std::array<uint8_t, 128> deserializerBuffer;
+std::vector<String> soundFileList;
 
 bool startPlayback()
 {
@@ -44,6 +45,9 @@ void setup()
   Serial1.begin(19200);
 
   sdHandler::setup();
+  soundFileList = sdHandler::list("/");
+  for (const String& name : soundFileList) { Serial.println(name); }
+
   audioDriver::setup();
   audioPipeline::setup();
   startPlayback();
