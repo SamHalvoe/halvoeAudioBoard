@@ -16,9 +16,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="halvoeAudioBoard.ino" />
+    <ClCompile Include="halvoeSDHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.halvoeAudioBoard.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="halvoeAudioDriver.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="halvoeAudioPipeline.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
