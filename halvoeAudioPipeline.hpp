@@ -1,7 +1,7 @@
 #pragma once
 
 #include <AudioTools.h>
-#include <AudioLibs/I2SCodecStream.h>
+#include <AudioTools/AudioLibs/I2SCodecStream.h>
 
 #include "halvoeAudioDriver.hpp"
 
