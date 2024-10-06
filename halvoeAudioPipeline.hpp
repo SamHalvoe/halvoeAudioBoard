@@ -12,9 +12,36 @@ namespace halvoe::audioPipeline
   VolumeStream volumeStream;
   Pipeline audioPipeline;
   StreamCopy audioCopier(4096);
-  
+
+  SilenceGenerator<uint8_t> silenceGenerator;
+  GeneratedSoundStream<uint8_t> silenceStream(silenceGenerator);
+
   float volumeStep = 0.05;
   float volume = volumeStep;
+
+  void begin(Stream& io_audioSource)
+  {
+    audioCopier.begin(audioPipeline, io_audioSource);
+  }
+
+  void end()
+  {
+    audioCopier.end();
+  }
+
+  void beginSilence()
+  {
+    silenceGenerator.begin();
+    silenceStream.begin();
+    audioCopier.begin(audioPipeline, silenceStream);
+  }
+
+  void endSilence()
+  {
+    audioCopier.end();
+    silenceStream.end();
+    silenceGenerator.end();
+  }
 
   bool setup()
   {
@@ -37,16 +64,8 @@ namespace halvoe::audioPipeline
     audioPipeline.setOutput(i2sOutStream);
     if (not audioPipeline.isOK()) { return false; }
 
+    beginSilence();
+
     return true;
-  }
-
-  void begin(Stream& io_audioSource)
-  {
-    audioCopier.begin(audioPipeline, io_audioSource);
-  }
-
-  void end()
-  {
-    audioCopier.end();
   }
 }

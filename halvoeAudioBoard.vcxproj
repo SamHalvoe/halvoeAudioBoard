@@ -81,8 +81,11 @@
     <ClCompile Include="halvoeSDHandler.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="halvoeAudioBoard.hpp" />
     <ClInclude Include="halvoeAudioDriver.hpp" />
     <ClInclude Include="halvoeAudioPipeline.hpp" />
+    <ClInclude Include="SerialInterface.hpp" />
+    <ClInclude Include="SerialPeriphial.hpp" />
     <ClInclude Include="__vm\.halvoeAudioBoard.vsarduino.h" />
   </ItemGroup>
   <PropertyGroup>
