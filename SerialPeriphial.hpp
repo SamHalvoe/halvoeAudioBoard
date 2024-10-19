@@ -4,7 +4,10 @@
 
 namespace halvoe
 {
-	class SerialPeriphial : public SerialInterface
+	static constexpr const size_t c_serializerBufferSize = 1024;
+	static constexpr const size_t c_deserializerBufferSize = 1024;
+
+	class SerialPeriphial : public SerialInterface<c_serializerBufferSize, c_deserializerBufferSize>
 	{
 		public:
 			SerialPeriphial() = default;
@@ -16,21 +19,21 @@ namespace halvoe
 
 				return Serial1;
 			}
-
+			
 		private:
-			bool doHandleData(Deserializer<c_bufferSize>&& in_deserializer, DataCode in_code)
+			bool doHandleData(Deserializer<c_deserializerBufferSize>&& in_deserializer, SerialDataCode in_code)
 			{
 				return false;
 			}
 
-			bool doHandleCommand(Deserializer<c_bufferSize>&& in_deserializer, CommandCode in_code)
+			bool doHandleCommand(Deserializer<c_deserializerBufferSize>&& in_deserializer, SerialCommandCode in_code)
 			{
 				switch (in_code)
 				{
-					case CommandCode::playFile:
-						StringSizeType filenameSize = 0;
-						auto filenameRaw = in_deserializer.read<StringSizeType>(64, filenameSize);
-						String filename(filenameRaw.get(), filenameSize);
+					case SerialCommandCode::playFile:
+						SerialStringSizeType filenameSize = 0;
+						auto filenamePointer = in_deserializer.read<SerialStringSizeType>(64, filenameSize);
+						String filename(filenamePointer.get(), filenameSize);
 						return playFile(filename);
 				}
 
