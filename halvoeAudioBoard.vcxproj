@@ -87,11 +87,6 @@
     <ClInclude Include="SerialPeriphial.hpp" />
     <ClInclude Include="__vm\.halvoeAudioBoard.vsarduino.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\halvoeAudioBoardSerialInterface\halvoeAudioBoardSerialInterface\halvoeAudioBoardSerialInterface.vcxproj">
-      <Project>{8af45274-fb5c-45d5-983c-511b491ef5fe}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
   </PropertyGroup>
