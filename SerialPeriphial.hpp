@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SerialInterface.hpp"
+#include <SerialInterface.hpp>
 
 namespace halvoe
 {
@@ -10,14 +10,15 @@ namespace halvoe
 	class SerialPeriphial : public SerialInterface<c_serializerBufferSize, c_deserializerBufferSize>
 	{
 		public:
-			SerialPeriphial() = default;
+			SerialPeriphial(HardwareSerial& in_serial) : SerialInterface<c_serializerBufferSize, c_deserializerBufferSize>(in_serial)
+			{}
 
 			bool setup()
 			{
-				Serial1.setPins(33, 32);
-				Serial1.begin(19200);
+				m_serial.setPins(33, 32);
+				m_serial.begin(19200);
 
-				return Serial1;
+				return m_serial;
 			}
 			
 		private:

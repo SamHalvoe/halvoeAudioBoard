@@ -3,7 +3,7 @@
 
 using namespace halvoe;
 
-halvoe::SerialPeriphial serialInterface;
+SerialPeriphial serialInterface(Serial1);
 
 void setup()
 {
@@ -24,7 +24,7 @@ void setup()
 
 void loop()
 {
-  serialInterface.receive();
+  serialInterface.receiveMessage();
   
   size_t copiedBytesCount = audioPipeline::audioCopier.copy();
 
