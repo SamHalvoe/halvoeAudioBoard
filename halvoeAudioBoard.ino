@@ -38,11 +38,7 @@ void loop()
 
     if (copiedBytesCount == 0) // 0 bytes copied mean end of source
     {
-      audioPipeline::volumeStream.setVolume(0.0);
-      audioPipeline::volume = 0.0;
-      audioPipeline::end();
-      audioPipeline::beginSilence();
-      isPlaybackActive = false;
+      endPlayback();
     }
   }
 }
