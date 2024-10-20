@@ -22,10 +22,10 @@ namespace halvoe
 			}
 			
 		private:
-			bool handlePlayFile(Deserializer<c_deserializerBufferSize>&& in_deserializer)
+			bool handlePlayFile(Deserializer<c_deserializerBufferSize>& io_deserializer)
 			{
 				SerialStringSizeType filenameSize = 0;
-				auto filenamePointer = in_deserializer.read<SerialStringSizeType>(64, filenameSize);
+				auto filenamePointer = io_deserializer.read<SerialStringSizeType>(64, filenameSize);
 				String filename(filenamePointer.get(), filenameSize);
 				return playFile(filename);
 			}
@@ -35,16 +35,16 @@ namespace halvoe
 				return endPlayback();
 			}
 
-			bool doHandleData(Deserializer<c_deserializerBufferSize>&& in_deserializer, SerialDataCode in_code)
+			bool doHandleData(Deserializer<c_deserializerBufferSize>& io_deserializer, SerialDataCode in_code)
 			{
 				return false;
 			}
 
-			bool doHandleCommand(Deserializer<c_deserializerBufferSize>&& in_deserializer, SerialCommandCode in_code)
+			bool doHandleCommand(Deserializer<c_deserializerBufferSize>& io_deserializer, SerialCommandCode in_code)
 			{
 				switch (in_code)
 				{
-					case SerialCommandCode::playFile:		 return handlePlayFile(std::move(in_deserializer));
+					case SerialCommandCode::playFile:		 return handlePlayFile(io_deserializer);
 					case SerialCommandCode::endPlayback: return handleEndPlayback();
 				}
 
