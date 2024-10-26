@@ -22,6 +22,18 @@
     <ClCompile Include="halvoeSDHandler.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="SerialPeriphial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="halvoeAudioDriver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="halvoeAudioPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="halvoeSDHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.halvoeAudioBoard.vsarduino.h">
@@ -34,9 +46,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SerialPeriphial.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="halvoeAudioBoard.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
