@@ -1,4 +1,5 @@
 #include "halvoeAudioPipeline.hpp"
+#include "halvoeLog.hpp"
 
 namespace halvoe
 {
@@ -11,7 +12,7 @@ namespace halvoe
 
   bool AudioPipeline::setup()
   {
-    // setup audio board (dríver)
+    // setup audio board (driver)
     m_boardDriver.setup();
 
     // setup volume stream
@@ -91,10 +92,7 @@ namespace halvoe
 
     if (not m_soundFile)
     {
-      Serial.print("Could not open file: \"");
-      Serial.print(path);
-      Serial.println("\"");
-
+      LOG_ERROR("Could not open file: \"", path, "\"");
       return false;
     }
 

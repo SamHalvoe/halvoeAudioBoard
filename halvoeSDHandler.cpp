@@ -1,3 +1,4 @@
+#include "halvoeLog.hpp"
 #include "halvoeSDHandler.hpp"
 
 namespace halvoe
@@ -9,10 +10,12 @@ namespace halvoe
   {
     if (not SD.begin())
     {
-      Serial.println("SD.begin() failed!");
+      LOG_ERROR("SD.begin() failed!");
       return false;
     }
-
+    
+    LOG_ATTACH_FS_MANUAL(SD, "audioBoard.log", FILE_APPEND);
+    LOG_INFO("[File logging ready]");
     return true;
   }
 
@@ -23,7 +26,7 @@ namespace halvoe
     std::vector<String> list;
 
     for (File file = directory.openNextFile();
-      file; file = directory.openNextFile())
+         file; file = directory.openNextFile())
     {
       list.emplace_back(file.name());
     }
