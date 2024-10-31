@@ -1,32 +1,38 @@
 #include "halvoeLog.hpp"
+#include "halvoeVersion.hpp"
 #include "halvoeSDHandler.hpp"
 #include "halvoeAudioPipeline.hpp"
 #include "SerialPeriphial.hpp"
 
 using namespace halvoe;
+using namespace halvoeAudioBoard;
 
 SDHandler sdHandler;
+LogFileManager logFileManager;
 AudioPipeline audioPipeline;
 SerialPeriphial serialInterface(Serial1, audioPipeline);
 
 void setup()
 {
   Serial.begin(115200);
-  AudioLogger::instance().begin(Serial, AudioLogger::Warning);
   delay(2000);
 
-  LOG_INFO("[Serial Ready]");
-  LOG_INFO("---- SETUP BEGIN ----");
+  LOG_INFO("[Serial is ready]");
 
   sdHandler.setup();
+  logFileManager.setup();
+  AudioLogger::instance().begin(logFileManager.getLogStreamAudioLibrary(), AudioLogger::Warning);
+  LOG_INFO(getVersionString());
   audioPipeline.setup();
   serialInterface.setup();
 
-  LOG_INFO("---- SETUP END ----");
+  LOG_INFO("Leave setup...");
 }
 
 void loop()
 {
   serialInterface.receiveMessage();
   audioPipeline.run();
+  logFileManager.flush();
+  logFileManager.flushAudioLibrary();
 }

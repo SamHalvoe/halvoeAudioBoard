@@ -34,6 +34,9 @@
     <ClCompile Include="halvoeSDHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="halvoeLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.halvoeAudioBoard.vsarduino.h">
@@ -49,6 +52,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="halvoeLog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="halvoeVersion.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

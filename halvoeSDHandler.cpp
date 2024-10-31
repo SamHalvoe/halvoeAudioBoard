@@ -1,22 +1,21 @@
-#include "halvoeLog.hpp"
 #include "halvoeSDHandler.hpp"
+#include "halvoeLog.hpp"
 
-namespace halvoe
+namespace halvoeAudioBoard
 {
   SDHandler::SDHandler()
   {}
 
   bool SDHandler::setup()
   {
-    if (not SD.begin())
-    {
-      LOG_ERROR("SD.begin() failed!");
-      return false;
-    }
-    
-    LOG_ATTACH_FS_MANUAL(SD, "audioBoard.log", FILE_APPEND);
-    LOG_INFO("[File logging ready]");
-    return true;
+    m_isSetup = SD.begin();
+    if (not m_isSetup) { LOG_ERROR("SD.begin() failed!"); }
+    return m_isSetup;
+  }
+
+  bool SDHandler::isSetup() const
+  {
+    return m_isSetup;
   }
 
   std::vector<String> SDHandler::list(const char* in_directoryPath)

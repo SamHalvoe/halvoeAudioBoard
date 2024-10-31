@@ -9,8 +9,8 @@ namespace halvoe
     public:
       // I2C pins & config
       const uint32_t I2C_SPEED = 100000; // Clock Rate
-      const int8_t SDA_PIN = 21; // I2C Data,  Adafruit ESP32 S3 3, Sparkfun Thing Plus C 23
-      const int8_t SCL_PIN = 22; // I2C Clock, Adafruit ESP32 S3 4, Sparkfun Thing Plus C 22
+      const int8_t SDA_PIN = 21; // I2C Data
+      const int8_t SCL_PIN = 22; // I2C Clock
       const int8_t WM8960_ADDR = 0x1A; // Address of WM8960 I2C port
 
       // I2S pins (-1 = not used)
