@@ -21,6 +21,7 @@ void setup()
 
   sdHandler.setup();
   logFileManager.setup();
+  AudioDriverLogger.begin(logFileManager.getLogStreamAudioLibrary(), AudioDriverLogLevel::Warning);
   AudioLogger::instance().begin(logFileManager.getLogStreamAudioLibrary(), AudioLogger::Warning);
   LOG_INFO(getVersionString());
   audioPipeline.setup();

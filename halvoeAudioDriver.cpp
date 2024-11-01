@@ -8,9 +8,6 @@ namespace halvoe
 
   bool AudioBoardDriver::setup()
   {
-    // define log level for audio driver library
-    LOGLEVEL_AUDIODRIVER = AudioDriverDebug;
-
     // define I2C and I2S pins
     m_audioPins.addI2C(PinFunction::CODEC, SCL_PIN, SDA_PIN, WM8960_ADDR, I2C_SPEED, Wire);
     m_audioPins.addI2S(PinFunction::CODEC, MCLK_PIN, BCLK_PIN, WS_PIN, DO_PIN, DI_PIN);
