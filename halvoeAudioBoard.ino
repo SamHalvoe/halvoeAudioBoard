@@ -22,7 +22,7 @@ void setup()
   sdHandler.setup();
   logFileManager.setup();
   AudioDriverLogger.begin(logFileManager.getLogStreamAudioLibrary(), AudioDriverLogLevel::Warning);
-  AudioLogger::instance().begin(logFileManager.getLogStreamAudioLibrary(), AudioLogger::Warning);
+  AudioToolsLogger.begin(logFileManager.getLogStreamAudioLibrary(), AudioToolsLogLevel::Warning);
   LOG_INFO(getVersionString());
   audioPipeline.setup();
   serialInterface.setup();
