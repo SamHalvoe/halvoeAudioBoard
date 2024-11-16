@@ -62,7 +62,7 @@ namespace halvoeAudioBoard
     if (m_timeSinceFlush >= m_logFileFlushInterval)
     {
       LOG_FILE_FLUSH();
-      LOG_INFO("LOG_FILE_FLUSHed");
+      LOG_DEBUG("LOG_FILE_FLUSHed");
       m_timeSinceFlush = 0;
     }
   }
@@ -72,7 +72,7 @@ namespace halvoeAudioBoard
     if (m_timeSinceFlushAudioLibrary >= m_logFileFlushIntervalAudioLibrary)
     {
       m_logStreamAudioLibrary.flush();
-      LOG_INFO("Audio library log file flushed");
+      LOG_DEBUG("Audio library log file flushed");
       m_timeSinceFlushAudioLibrary = 0;
     }
   }

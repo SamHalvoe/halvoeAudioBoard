@@ -16,8 +16,7 @@ void setup()
 {
   Serial.begin(115200);
   delay(2000);
-
-  LOG_INFO("[Serial is ready]");
+  LOG_INFO("Enter setup...");
 
   sdHandler.setup();
   logFileManager.setup();
